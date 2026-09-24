@@ -15,10 +15,12 @@ public class Predator : MonoBehaviour
 
     private Vector3 destination;
     private float h;
+    private Territory territory;
 
     private void Start()
     {
         destination = transform.position;
+        territory = GetComponent<Territory>();
     }
 
     public void Simulate(float h)
@@ -56,7 +58,7 @@ public class Predator : MonoBehaviour
             return;
         }
 
-        // Si ya llegÛ al destino, elegir uno nuevo
+        // Si ya llegù al destino, elegir uno nuevo
         if (Vector3.Distance(transform.position, destination) < 0.1f)
         {
             SelectNewDestination();
@@ -75,7 +77,7 @@ public class Predator : MonoBehaviour
 
         destination = nearestBunny.transform.position;
 
-        // Si est· suficientemente cerca, pasar a comer
+        // Si estù suficientemente cerca, pasar a comer
         if (Vector3.Distance(transform.position, nearestBunny.transform.position) < 0.2f)
         {
             currentState = PredatorState.Eating;
@@ -95,7 +97,7 @@ public class Predator : MonoBehaviour
             }
         }
 
-        // DespuÈs de comer vuelve a explorar
+        // Despuùs de comer vuelve a explorar
         currentState = PredatorState.Exploring;
     }
 
@@ -125,6 +127,12 @@ public class Predator : MonoBehaviour
         else
         {
             destination = targetPoint;
+        }
+
+        // La patrulla se queda dentro de la zona. Perseguir y comer no pasan por aquÌ.
+        if (territory != null)
+        {
+            destination = territory.ClampPoint(destination);
         }
     }
 
@@ -168,7 +176,7 @@ public class Predator : MonoBehaviour
     Bunny FindNearestBunny()
     {
         Collider2D[] hits = Physics2D.OverlapCircleAll(transform.position, visionRange, LayerMask.GetMask("Bunnies"));
-        Debug.Log($"Predator {name} encontrÛ {hits.Length} colliders en su rango");
+        Debug.Log($"Predator {name} encontrù {hits.Length} colliders en su rango");
         Bunny nearest = null;
         float minDist = Mathf.Infinity;
 

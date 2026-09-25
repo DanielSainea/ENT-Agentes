@@ -14,7 +14,7 @@ public class Predator : MonoBehaviour
 
     [Header("Resting - Descanso en madrigueras")]
     // Si no se asigna una madriguera (den) en el Inspector, el depredador
-    // descansará en el mismo punto donde se encuentre. La lógica vive en
+    // descansarÃ¡ en el mismo punto donde se encuentre. La lÃ³gica vive en
     // la clase DescansoDepredador (ver DescansoDepredador.cs).
     public Transform den;
     public float restTime = 5f;
@@ -22,14 +22,14 @@ public class Predator : MonoBehaviour
 
     [Header("Attacks - Ataques fallidos")]
     // Probabilidad (0 a 1) de que el depredador falle su ataque aunque
-    // haya alcanzado al conejo. La lógica vive en la clase PredatorAttack
+    // haya alcanzado al conejo. La lÃ³gica vive en la clase PredatorAttack
     // (ver PredatorAttack.cs).
     [Range(0f, 1f)]
     public float attackMissChance = 0.25f;
     private PredatorAttack attack;
 
     // Tras fallar un ataque, el depredador no puede re-atacar de inmediato:
-    // debe esperar este tiempo (en segundos de simulación), dándole al
+    // debe esperar este tiempo (en segundos de simulaciÃ³n), dÃ¡ndole al
     // conejo una ventana real para alejarse en vez de ser re-atacado en
     // el siguiente tick.
     public float missedAttackCooldown = 2f;
@@ -41,16 +41,18 @@ public class Predator : MonoBehaviour
 
     private Vector3 destination;
     private float h;
+    private Territory territory;
 
     private void Start()
     {
         destination = transform.position;
 
-        // Se instancian aquí (y no como campos inicializados en la
-        // declaración) porque dependen de valores configurados en el
+        // Se instancian aquÃ­ (y no como campos inicializados en la
+        // declaraciÃ³n) porque dependen de valores configurados en el
         // Inspector (den, restTime, attackMissChance).
         resting = new DescansoDepredador(den, restTime);
         attack = new PredatorAttack(attackMissChance);
+        territory = GetComponent<Territory>();
     }
 
     public void Simulate(float h)
@@ -96,7 +98,8 @@ public class Predator : MonoBehaviour
             return;
         }
 
-        // Si ya llegó al destino, elegir uno nuevo
+        // Si ya llegÃ³ al destino, elegir uno nuevo
+        // Si ya lleg al destino, elegir uno nuevo
         if (Vector3.Distance(transform.position, destination) < 0.1f)
         {
             SelectNewDestination();
@@ -115,12 +118,11 @@ public class Predator : MonoBehaviour
 
         destination = nearestBunny.transform.position;
 
-        // Solo pasa a Eating (intentar atacar) si está lo bastante cerca
-        // Y ya no está en cooldown por un ataque fallido reciente. Así el
+        // Solo pasa a Eating (intentar atacar) si estÃ¡ lo bastante cerca
+        // Y ya no estÃ¡ en cooldown por un ataque fallido reciente. AsÃ­ el
         // conejo tiene una ventana real para alejarse tras un fallo, en
         // vez de que el depredador reintente en el siguiente tick.
-        if (Vector3.Distance(transform.position, nearestBunny.transform.position) < 0.2f
-            && attackCooldownTimer <= 0f)
+        if (Vector3.Distance(transform.position, nearestBunny.transform.position) < 0.2f && attackCooldownTimer <= 0f);)
         {
             currentState = PredatorState.Eating;
         }
@@ -137,15 +139,15 @@ public class Predator : MonoBehaviour
             {
                 if (attack.AttackFails())
                 {
-                    Debug.Log($"{name} falló el ataque contra {food.name}, el conejo escapa.");
+                    Debug.Log($"{name} fallÃ³ el ataque contra {food.name}, el conejo escapa.");
                     food.currentState = BunnyState.Fleeing;
                     attackCooldownTimer = missedAttackCooldown;
 
-                    // Si el depredador quedó prácticamente encima del conejo
-                    // (distancia casi 0), Bunny.Flee() no tiene una dirección
-                    // válida hacia dónde huir (el vector se normaliza a ~0 y
+                    // Si el depredador quedÃ³ prÃ¡cticamente encima del conejo
+                    // (distancia casi 0), Bunny.Flee() no tiene una direcciÃ³n
+                    // vÃ¡lida hacia dÃ³nde huir (el vector se normaliza a ~0 y
                     // el conejo se queda quieto). Lo empujamos un poco lejos
-                    // del depredador para asegurar que sí tenga a dónde huir.
+                    // del depredador para asegurar que sÃ­ tenga a dÃ³nde huir.
                     Vector3 pushDir = food.transform.position - transform.position;
                     pushDir = pushDir.sqrMagnitude > 0.0001f
                         ? pushDir.normalized
@@ -154,14 +156,14 @@ public class Predator : MonoBehaviour
                 }
                 else
                 {
-                    Debug.Log($"{name} cazó con éxito a {food.name}.");
+                    Debug.Log($"{name} cazÃ³ con Ã©xito a {food.name}.");
                     energy += food.age;
                     Destroy(food.gameObject);
                 }
             }
         }
 
-        // Después de intentar comer (haya fallado o no) vuelve a explorar
+        // DespuÃ©s de intentar comer (haya fallado o no) vuelve a explorar
         currentState = PredatorState.Exploring;
     }
 
@@ -192,6 +194,12 @@ public class Predator : MonoBehaviour
         {
             destination = targetPoint;
         }
+
+        // La patrulla se queda dentro de la zona. Perseguir y comer no pasan por aquí.
+        if (territory != null)
+        {
+            destination = territory.ClampPoint(destination);
+        }
     }
 
     void Move()
@@ -202,11 +210,11 @@ public class Predator : MonoBehaviour
             speed * h
         );
 
-        // Mientras descansa en la madriguera no gasta energía por
-        // "movimiento": si no fuera así, la energía seguiría bajando
-        // incluso quieto y el depredador nunca lograría recuperarse ni
+        // Mientras descansa en la madriguera no gasta energÃ­a por
+        // "movimiento": si no fuera asÃ­, la energÃ­a seguirÃ­a bajando
+        // incluso quieto y el depredador nunca lograrÃ­a recuperarse ni
         // alejarse de la madriguera antes de volver a quedar bajo el
-        // umbral de descanso (quedaría en bucle entrando y saliendo).
+        // umbral de descanso (quedarÃ­a en bucle entrando y saliendo).
         if (currentState != PredatorState.Resting)
         {
             energy -= speed * h;
@@ -220,7 +228,7 @@ public class Predator : MonoBehaviour
 
     void CheckState()
     {
-        // Si está bajo de energía y no está ya descansando → ir a descansar
+        // Si estÃ¡ bajo de energÃ­a y no estÃ¡ ya descansando â†’ ir a descansar
         if (energy < 3f && currentState != PredatorState.Resting)
         {
             currentState = PredatorState.Resting;
@@ -249,6 +257,7 @@ public class Predator : MonoBehaviour
     Bunny FindNearestBunny()
     {
         Collider2D[] hits = Physics2D.OverlapCircleAll(transform.position, visionRange, LayerMask.GetMask("Bunnies"));
+        Debug.Log($"Predator {name} encontr {hits.Length} colliders en su rango");
         Bunny nearest = null;
         float minDist = Mathf.Infinity;
 
@@ -286,9 +295,9 @@ public class Predator : MonoBehaviour
         bool finishedResting = resting.Tick(h, hasArrived: true);
         if (finishedResting)
         {
-            energy = 15f; // recupera energía al terminar de descansar
+            energy = 15f; // recupera energÃ­a al terminar de descansar
             currentState = PredatorState.Exploring;
-            Debug.Log($"{name} terminó de descansar en la madriguera.");
+            Debug.Log($"{name} terminÃ³ de descansar en la madriguera.");
         }
     }
 }

@@ -9,6 +9,13 @@ public class Predator : MonoBehaviour
     public float speed = 1f;
     public float visionRange = 5f;
 
+
+
+    [Header("Terrain Friction")]
+    public float actualSpeed;
+    private float speedMultiplier = 1f;
+
+
     [Header("Predator States")]
     public bool isAlive = true;
     public PredatorState currentState = PredatorState.Exploring;
@@ -16,9 +23,11 @@ public class Predator : MonoBehaviour
     private Vector3 destination;
     private float h;
 
+
     private void Start()
     {
         destination = transform.position;
+        actualSpeed = speed;
     }
 
     public void Simulate(float h)
@@ -128,12 +137,15 @@ public class Predator : MonoBehaviour
         }
     }
 
+
     void Move()
     {
+        actualSpeed = speed * speedMultiplier;
+
         transform.position = Vector3.MoveTowards(
             transform.position,
             destination,
-            speed * h
+            actualSpeed * h
         );
 
         energy -= speed * h;
@@ -187,5 +199,29 @@ public class Predator : MonoBehaviour
         }
 
         return nearest;
+    }
+
+
+
+    private void OnTriggerEnter2D(Collider2D other)
+    {
+        TerrainFriction terrain = other.GetComponent<TerrainFriction>();
+
+        if (terrain != null)
+        {
+            speedMultiplier = terrain.speedMultiplier;
+
+        }
+    }
+
+    private void OnTriggerExit2D(Collider2D other)
+    {
+        TerrainFriction terrain = other.GetComponent<TerrainFriction>();
+
+        if (terrain != null)
+        {
+            speedMultiplier = 1f;
+
+        }
     }
 }

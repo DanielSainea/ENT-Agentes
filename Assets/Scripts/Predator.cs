@@ -16,6 +16,10 @@ public class Predator : MonoBehaviour
     private float speedMultiplier = 1f;
 
 
+    [Header("Water")]
+    public bool canCrossWater = true;
+
+
     [Header("Predator States")]
     public bool isAlive = true;
     public PredatorState currentState = PredatorState.Exploring;
@@ -142,11 +146,28 @@ public class Predator : MonoBehaviour
     {
         actualSpeed = speed * speedMultiplier;
 
-        transform.position = Vector3.MoveTowards(
+        Vector3 nextPosition = Vector3.MoveTowards(
             transform.position,
             destination,
             actualSpeed * h
         );
+
+        Collider2D waterCollider = Physics2D.OverlapCircle(
+            nextPosition,
+            0.1f
+        );
+
+        if (waterCollider != null)
+        {
+            WaterBody water = waterCollider.GetComponent<WaterBody>();
+
+            if (water != null && !canCrossWater)
+            {
+                return;
+            }
+        }
+
+        transform.position = nextPosition;
 
         energy -= speed * h;
     }

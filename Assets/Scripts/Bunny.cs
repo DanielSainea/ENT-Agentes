@@ -14,6 +14,9 @@ public class Bunny : MonoBehaviour
     public float actualSpeed;
     private float speedMultiplier = 1f;
 
+    [Header("Water")]
+    public bool canCrossWater = false;
+
 
     [Header("Bunny States")]
     public bool isAlive = true;
@@ -197,18 +200,34 @@ public class Bunny : MonoBehaviour
     }
 
 
-
     void Move()
     {
         actualSpeed = speed * speedMultiplier;
 
-        transform.position = Vector3.MoveTowards(
+        Vector3 nextPosition = Vector3.MoveTowards(
             transform.position,
             destination,
             actualSpeed * h
         );
 
-        energy -= actualSpeed * h;
+        Collider2D waterCollider = Physics2D.OverlapCircle(
+            nextPosition,
+            0.1f
+        );
+
+        if (waterCollider != null)
+        {
+            WaterBody water = waterCollider.GetComponent<WaterBody>();
+
+            if (water != null && !canCrossWater)
+            {
+                return;
+            }
+        }
+
+        transform.position = nextPosition;
+
+        energy -= speed * h;
     }
 
     void Age()
